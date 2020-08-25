@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	godaddy "github.com/caoyongzheng/libdns-godaddy"
 	"github.com/libdns/libdns"
@@ -31,7 +30,7 @@ func main() {
 		log.Fatalln("ERROR: %s\n", err.Error())
 	}
 
-	testName := "libdns-test"
+	testName := "_acme-challenge.home"
 	hasTestName := false
 
 	for _, record := range records {
@@ -44,9 +43,10 @@ func main() {
 	if !hasTestName {
 		appendedRecords, err := provider.AppendRecords(context.TODO(), zone, []libdns.Record{
 			libdns.Record{
-				Type: "TXT",
-				Name: testName,
-				TTL:  time.Duration(600) * time.Second,
+				Type:  "TXT",
+				Name:  testName + "." + zone,
+				TTL:   0,
+				Value: "20HnRk5p6rZd7TXhiMoVEYSjt5OpetC6mdovlTfJ4As",
 			},
 		})
 

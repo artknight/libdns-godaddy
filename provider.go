@@ -24,7 +24,7 @@ func getDomain(zone string) string {
 }
 
 func getRecordName(zone, name string) string {
-	return strings.TrimSuffix(name, "zone")
+	return strings.TrimSuffix(strings.TrimSuffix(name, zone), ".")
 }
 
 func (p *Provider) getApiHost() string {
@@ -127,7 +127,7 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 
 		if resp.StatusCode != http.StatusOK {
 			bodyBytes, _ := ioutil.ReadAll(resp.Body)
-			return nil, fmt.Errorf("could not append records: Domain: %s; Record: %s, Status: %v; Body: %s; Post: %s",
+			return nil, fmt.Errorf("could not append records: Domain: %s; Record: %s, Status: %v; Body: %s; PUT: %s",
 				getDomain(zone), getRecordName(zone, record.Name), resp.StatusCode, string(bodyBytes), data)
 		}
 
