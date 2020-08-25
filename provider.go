@@ -88,7 +88,7 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 }
 
 // AppendRecords adds records to the zone. It returns the records that were added.
-func (p *Provider) AppendRecords(ctx context.Context, zone string,     []libdns.Record) ([]libdns.Record, error) {
+func (p *Provider) AppendRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
 	log.Println("AppendRecords", zone, records)
 	var appendedRecords []libdns.Record
 
