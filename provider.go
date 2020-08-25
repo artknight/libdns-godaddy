@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/libdns/libdns"
@@ -15,6 +17,14 @@ import (
 // Provider godaddy dns provider
 type Provider struct {
 	APIToken string
+}
+
+func getDomain(zone string) string {
+	return strings.TrimSuffix(zone, ".")
+}
+
+func getRecordName(zone, name string) string {
+	return strings.TrimSuffix(name, "zone")
 }
 
 func (p *Provider) getApiHost() string {
@@ -26,7 +36,9 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 	log.Println("GetRecords", zone)
 	client := http.Client{}
 
-	req, err := http.NewRequest("GET", p.getApiHost()+"/v1/domains/"+zone+"/records", nil)
+	domain := getDomain(zone)
+
+	req, err := http.NewRequest("GET", p.getApiHost()+"/v1/domains/"+domain+"/records", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +49,12 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("could not get records: Domain: %s; Status: %v; Body: %s",
+			domain, resp.StatusCode, string(bodyBytes))
+	}
 
 	result, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -96,7 +114,7 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 			return nil, err
 		}
 
-		req, err := http.NewRequest("PUT", p.getApiHost()+"/v1/domains/"+zone+"/records/"+record.Type+"/"+record.Name, bytes.NewBuffer(data))
+		req, err := http.NewRequest("PUT", p.getApiHost()+"/v1/domains/"+getDomain(zone)+"/records/"+record.Type+"/"+getRecordName(zone, record.Name), bytes.NewBuffer(data))
 		if err != nil {
 			return nil, err
 		}
@@ -108,6 +126,12 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 			return nil, err
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			return nil, fmt.Errorf("could not get records: Domain: %s; Record: %s, Status: %v; Body: %s",
+				zone, record.Name, resp.StatusCode, string(bodyBytes))
+		}
 
 		_, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -129,6 +153,7 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 // DeleteRecords deletes the records from the zone.
 func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
 	log.Println("DeleteRecords", zone, records)
+
 	currentRecords, err := p.GetRecords(ctx, zone)
 	if err != nil {
 		return nil, err
@@ -138,7 +163,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 
 	for _, record := range records {
 		for i, currentRecord := range currentRecords {
-			if currentRecord.Type == record.Type && currentRecord.Name == record.Name {
+			if currentRecord.Type == record.Type && currentRecord.Name == getRecordName(zone, record.Name) {
 				currentRecords = append(currentRecords[:i], currentRecords[i+1:]...)
 				deletedRecords = append(deletedRecords, currentRecord)
 				break
@@ -169,7 +194,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", p.getApiHost()+"/v1/domains/"+zone+"/records", bytes.NewBuffer(dataByte))
+	req, err := http.NewRequest("PUT", p.getApiHost()+"/v1/domains/"+getDomain(zone)+"/records", bytes.NewBuffer(dataByte))
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +207,12 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("could not get records: Domain: %s; Records: %v, Status: %v; Body: %s",
+			zone, currentRecords, resp.StatusCode, string(bodyBytes))
+	}
 
 	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
