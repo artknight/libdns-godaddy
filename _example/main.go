@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	godaddy "github.com/caoyongzheng/libdns-godday"
+	godaddy "github.com/caoyongzheng/libdns-godaddy"
 	"github.com/libdns/libdns"
 )
 

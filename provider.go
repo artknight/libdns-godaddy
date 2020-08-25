@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -22,6 +23,7 @@ func (p *Provider) getApiHost() string {
 
 // GetRecords lists all the records in the zone.
 func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record, error) {
+	log.Println("GetRecords", zone)
 	client := http.Client{}
 
 	req, err := http.NewRequest("GET", p.getApiHost()+"/v1/domains/"+zone+"/records", nil)
@@ -69,6 +71,7 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 
 // AppendRecords adds records to the zone. It returns the records that were added.
 func (p *Provider) AppendRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
+	log.Println("AppendRecords", zone, records)
 	var appendedRecords []libdns.Record
 
 	for _, record := range records {
@@ -119,11 +122,13 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 // SetRecords sets the records in the zone, either by updating existing records
 // or creating new ones. It returns the updated records.
 func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
+	log.Println("SetRecords", zone, records)
 	return p.AppendRecords(ctx, zone, records)
 }
 
 // DeleteRecords deletes the records from the zone.
 func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
+	log.Println("DeleteRecords", zone, records)
 	currentRecords, err := p.GetRecords(ctx, zone)
 	if err != nil {
 		return nil, err
