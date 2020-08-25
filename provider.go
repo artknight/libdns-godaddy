@@ -185,3 +185,11 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 
 	return deletedRecords, nil
 }
+
+// Interface guards
+var (
+	_ libdns.RecordGetter   = (*Provider)(nil)
+	_ libdns.RecordAppender = (*Provider)(nil)
+	_ libdns.RecordSetter   = (*Provider)(nil)
+	_ libdns.RecordDeleter  = (*Provider)(nil)
+)
