@@ -88,7 +88,7 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 }
 
 // AppendRecords adds records to the zone. It returns the records that were added.
-func (p *Provider) AppendRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
+func (p *Provider) AppendRecords(ctx context.Context, zone string,     []libdns.Record) ([]libdns.Record, error) {
 	log.Println("AppendRecords", zone, records)
 	var appendedRecords []libdns.Record
 
@@ -129,8 +129,8 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 
 		if resp.StatusCode != http.StatusOK {
 			bodyBytes, _ := ioutil.ReadAll(resp.Body)
-			return nil, fmt.Errorf("could not get records: Domain: %s; Record: %s, Status: %v; Body: %s",
-				zone, record.Name, resp.StatusCode, string(bodyBytes))
+			return nil, fmt.Errorf("could not append records: Domain: %s; Record: %s, Status: %v; Body: %s; Post: %s",
+				getDomain(zone), getRecordName(zone, record.Name), resp.StatusCode, string(bodyBytes), data)
 		}
 
 		_, err = ioutil.ReadAll(resp.Body)
@@ -210,7 +210,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("could not get records: Domain: %s; Records: %v, Status: %v; Body: %s",
+		return nil, fmt.Errorf("could not delete records: Domain: %s; Records: %v, Status: %v; Body: %s",
 			zone, currentRecords, resp.StatusCode, string(bodyBytes))
 	}
 
